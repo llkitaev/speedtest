@@ -8,6 +8,7 @@ rm -rf /var/www/html/*
 
 # Copy frontend files
 cp /speedtest/*.js /var/www/html/
+cp /speedtest/*.ico /var/www/html/
 
 # Set up backend side for standlone modes
 if [ "$MODE" == "standalone" ]; then
@@ -36,9 +37,12 @@ fi
 if [[ "$TELEMETRY" == "true" && ( "$MODE" == "frontend" || "$MODE" == "standalone" ) ]]; then
   cp -r /speedtest/results /var/www/html/results
 
-  sed -i s/\$db_type=\".*\"/\$db_type=\"sqlite\"\;/g /var/www/html/results/telemetry_settings.php
-  sed -i s/\$Sqlite_db_file\ =\ \".*\"/\$Sqlite_db_file=\"\\\/database\\\/db.sql\"/g /var/www/html/results/telemetry_settings.php
-  sed -i s/\$stats_password=\".*\"/\$stats_password=\"$PASSWORD\"/g /var/www/html/results/telemetry_settings.php
+  sed -i s/\$db_type=\".*\"/\$db_type=\"$DB_TYPE\"\/g /var/www/html/results/telemetry_settings.php
+  sed -i s/\$stats_password=\".*\"/\$stats_password=\"$STATS_PASSWORD\"/g /var/www/html/results/telemetry_settings.php
+  sed -i s/\$PostgreSql_username=\".*\"/\$PostgreSql_username=\"$POSTGRES_USER\"/g /var/www/html/results/telemetry_settings.php
+  sed -i s/\$PostgreSql_password=\".*\"/\$PostgreSql_password=\"$POSTGRES_PASSWORD\"/g /var/www/html/results/telemetry_settings.php
+  sed -i s/\$PostgreSql_hostname=\".*\"/\$PostgreSql_hostname=\"$POSTGRES_HOST\"/g /var/www/html/results/telemetry_settings.php
+  sed -i s/\$PostgreSql_databasename=\".*\"/\$PostgreSql_databasename=\"$POSTGRES_DB\"/g /var/www/html/results/telemetry_settings.php
 
   if [ "$ENABLE_ID_OBFUSCATION" == "true" ]; then
     sed -i s/\$enable_id_obfuscation=.*\;/\$enable_id_obfuscation=true\;/g /var/www/html/results/telemetry_settings.php
@@ -52,8 +56,5 @@ if [[ "$TELEMETRY" == "true" && ( "$MODE" == "frontend" || "$MODE" == "standalon
   chown www-data /database/
 fi
 
-
-echo "Done, Starting APACHE"
-
-# This runs apache
-apache2-foreground
+echo "Starting NGINX Unit..."
+/usr/local/bin/docker-entrypoint.sh unitd --no-daemon --control unix:/var/run/control.unit.sock

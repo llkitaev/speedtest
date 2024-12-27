@@ -1,0 +1,61 @@
+services:
+  speedtest:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      MODE: ${SPEEDTEST_MODE}
+      TITLE: ${SPEEDTEST_TITLE}
+      TELEMETRY: ${SPEEDTEST_ENABLE_TELEMETRY}
+      ENABLE_ID_OBFUSCATION: ${SPEEDTEST_ENABLE_IP_OBFUSCATION}
+      REDACT_IP_ADDRESSES: ${SPEED_TEST_REDACT_IP_ADDRESSES}
+      STATS_PASSWORD: ${SPEEDTEST_STATS_PASSWORD}
+      DB_TYPE: ${SPEEDTEST_DB_TYPE}
+      POSTGRES_HOST: ${POSTGRES_HOST}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    logging:
+      driver: fluentd
+      options:
+        tag: docker.{{.ImageName}}.{{.Name}}.{{.ID}}
+    volumes:
+      - ./docker/servers.json:/servers.json:ro
+      - ./deployment/nginx-unit/config.json:/docker-entrypoint.d/config.json:ro
+    ports:
+      - "8081:8080"
+    depends_on:
+      - postgresql
+
+  postgresql:
+    image: postgres:14-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      PGDATA: /var/lib/postgresql/data
+    ports:
+      - "127.0.0.1:5432:5432"
+    logging:
+      driver: fluentd
+      options:
+        tag: docker.{{.ImageName}}.{{.Name}}.{{.ID}}
+    volumes:
+      - postgresql-data:/var/lib/postgresql/data
+      - ./results/telemetry_postgresql.sql:/docker-entrypoint-initdb.d/telemetry_postgresql.sql:ro
+
+  reverse-proxy:
+    image: caddy:2.9-alpine
+    ports:
+      - "8080:80"
+    logging:
+      driver: fluentd
+      options:
+        tag: docker.{{.ImageName}}.{{.Name}}.{{.ID}}
+    volumes:
+      - ./deployment/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+    depends_on:
+      - speedtest
+
+volumes:
+  postgresql-data:

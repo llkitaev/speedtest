@@ -1,0 +1,63 @@
+{
+    "listeners": {
+        "*:8080": {
+            "pass": "routes"
+        }
+    },
+    "access_log": {
+        "path": "/var/log/access.log"
+    },
+    "routes": [
+        {
+            "match": {
+                "uri": [
+                    "!/*.php",
+                    "!/results/*.php"
+                ]
+            },
+            "action": {
+                "share": "/var/www/html$uri"
+            }
+        },
+        {
+            "match": {
+                "uri": [
+                    "/results/",
+                    "/results/*"
+                ]
+            },
+            "action": {
+                "pass": "applications/stats"
+            }
+        },
+        {
+            "match": {
+                "uri": [
+                    "/",
+                    "/*"
+                ]
+            },
+            "action": {
+                "pass": "applications/app"
+            }
+        }
+    ],
+    "applications": {
+        "app": {
+            "type": "php",
+            "root": "/var/www/html/",
+            "script": "index.php",
+            "options": {
+                "file": "/etc/php/8.2/php.ini"
+            }
+        },
+        "stats": {
+            "type": "php",
+            "root": "/var/www/html/results/",
+            "script": "index.php",
+            "options": {
+                "file": "/etc/php/8.2/php.ini"
+            }
+        }
+    }
+}

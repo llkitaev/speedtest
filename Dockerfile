@@ -1,41 +1,21 @@
-FROM php:7.2-apache
-
-# Install extensions
-RUN apt-get update && apt-get install -y \
-        libfreetype6-dev \
-        libjpeg62-turbo-dev \
-        libpng-dev \
-    && docker-php-ext-install -j$(nproc) iconv \
-    && docker-php-ext-configure gd --with-freetype-dir=/usr/include/ --with-jpeg-dir=/usr/include/ \
-    && docker-php-ext-install -j$(nproc) gd
-
-# Prepare files and folders
-
-RUN mkdir -p /speedtest/
-
-# Copy sources
+FROM unit:1.31.1-php7.4
 
 COPY backend/ /speedtest/backend
 
 COPY results/*.php /speedtest/results/
 COPY results/*.ttf /speedtest/results/
+COPY *.js /speedtest/results/
 
 COPY *.js /speedtest/
+COPY *.ico /speedtest/
 COPY docker/servers.json /servers.json
 
 COPY docker/*.php /speedtest/
 COPY docker/entrypoint.sh /
 
-# Prepare environment variabiles defaults
+RUN mkdir -p /var/www/html/ && chmod +x /entrypoint.sh && \
+    touch /var/log/access.log
 
-ENV TITLE=LibreSpeed
-ENV MODE=standalone
-ENV PASSWORD=password
-ENV TELEMETRY=false
-ENV ENABLE_ID_OBFUSCATION=false
-ENV REDACT_IP_ADDRESSES=false
+EXPOSE 8080
 
-# Final touches
-
-EXPOSE 80
-CMD ["bash", "/entrypoint.sh"]
+ENTRYPOINT ["/entrypoint.sh"]

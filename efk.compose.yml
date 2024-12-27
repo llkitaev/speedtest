@@ -1,0 +1,52 @@
+services:
+  fluentd:
+    build:
+      context: ./deployment/fluentd
+      dockerfile: Dockerfile
+    environment:
+      - OPENSEARCH_HOST=opensearch
+      - OPENSEARCH_PORT=9200
+    volumes:
+      - type: bind
+        source: ./deployment/fluentd/fluent.conf
+        target: /fluentd/etc/fluent.conf
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
+    ports:
+      - 24224:24224
+      - 24224:24224/udp
+    depends_on:
+      - opensearch
+
+  opensearch:
+    image: opensearchproject/opensearch:2.10.0
+    environment:
+      - discovery.type=single-node
+      - bootstrap.memory_lock=true
+      - "OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx1024m"
+      - "DISABLE_SECURITY_PLUGIN=true"
+    ports:
+      - "9200:9200"
+      - "9600:9600"
+
+  opensearch-dashboards:
+    image: opensearchproject/opensearch-dashboards:2.10.0
+    environment:
+      OPENSEARCH_USERNAME: ${OPENSEARCH_USERNAME}
+      OPENSEARCH_PASSWORD: ${OPENSEARCH_PASSWORD}
+      OPENSEARCH_HOSTS: '["http://opensearch:9200"]'
+      SERVER_MAX_HEAP: 512m
+      DISABLE_SECURITY_DASHBOARDS_PLUGIN: true
+    logging:
+      driver: fluentd
+      options:
+        tag: docker.{{.ImageName}}.{{.Name}}.{{.ID}}``
+    ports:
+      - 5601:5601
+    depends_on:
+      - fluentd
+      - opensearch
+

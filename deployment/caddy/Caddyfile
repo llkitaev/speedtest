@@ -1,0 +1,6 @@
+http://localhost {
+    reverse_proxy http://speedtest:8080 {
+        header_up Host {upstream_hostport}
+        header_down -Server
+    }
+}
