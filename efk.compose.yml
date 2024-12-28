@@ -20,6 +20,8 @@ services:
       - 24224:24224/udp
     depends_on:
       - opensearch
+    networks:
+      - default
 
   opensearch:
     image: opensearchproject/opensearch:2.10.0
@@ -31,6 +33,8 @@ services:
     ports:
       - "9200:9200"
       - "9600:9600"
+    networks:
+      - default
 
   opensearch-dashboards:
     image: opensearchproject/opensearch-dashboards:2.10.0
@@ -49,4 +53,10 @@ services:
     depends_on:
       - fluentd
       - opensearch
+    networks:
+      - default
 
+networks:
+  default:
+    name: shared_network
+    external: true

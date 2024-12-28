@@ -1,4 +1,4 @@
-FROM unit:1.31.1-php7.4
+FROM unit:1.33.0-php8.2
 
 COPY backend/ /speedtest/backend
 
