@@ -26,6 +26,8 @@ services:
       - "8081:8080"
     depends_on:
       - postgresql
+    networks:
+      - default
 
   postgresql:
     image: postgres:14-alpine
@@ -43,6 +45,8 @@ services:
     volumes:
       - postgresql-data:/var/lib/postgresql/data
       - ./results/telemetry_postgresql.sql:/docker-entrypoint-initdb.d/telemetry_postgresql.sql:ro
+    networks:
+      - default
 
   reverse-proxy:
     image: caddy:2.9-alpine
@@ -56,6 +60,13 @@ services:
       - ./deployment/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
     depends_on:
       - speedtest
+    networks:
+      - default
 
 volumes:
   postgresql-data:
+
+networks:
+  default:
+    name: shared_network
+    external: true
